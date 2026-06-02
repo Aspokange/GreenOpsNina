@@ -1,0 +1,48 @@
+---
+- name: Configuration du serveur web MediTrack
+  hosts: web
+  become: yes
+
+  tasks:
+
+    - name: Mettre à jour les paquets
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Installer Nginx
+      yum:
+        name: nginx
+        state: present
+
+    - name: Démarrer et activer Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Déployer page MediTrack
+      copy:
+        src: files/index.html
+        dest: /usr/share/nginx/html/index.html
+        owner: nginx
+        group: nginx
+        mode: '0644'
+
+    - name: Installer firewalld
+      yum:
+        name: firewalld
+        state: present
+
+    - name: Démarrer firewalld
+      service:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Autoriser HTTP
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: yes

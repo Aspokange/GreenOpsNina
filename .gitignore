@@ -1,0 +1,10 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# AWS CLI zip
+awscliv2.zip
+
+# OS files
+.DS_Store

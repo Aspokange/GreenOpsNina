@@ -2,6 +2,7 @@
 .terraform/
 *.tfstate
 *.tfstate.backup
+terraform.tfvars
 
 # AWS CLI zip
 awscliv2.zip

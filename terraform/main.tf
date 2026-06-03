@@ -65,6 +65,59 @@ resource "aws_db_subnet_group" "meditrack_db_subnet_group" {
 }
 
 # =========================
+# RDS SECURITY GROUP
+# =========================
+
+resource "aws_security_group" "meditrack_rds_sg" {
+  name   = "meditrack-rds-sg"
+  vpc_id = aws_vpc.meditrack_vpc.id
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.meditrack_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "meditrack-rds-sg"
+  }
+}
+
+# =========================
+# RDS POSTGRESQL INSTANCE
+# =========================
+
+resource "aws_db_instance" "meditrack_db" {
+  identifier              = "meditrack-db"
+  engine                  = "postgres"
+  engine_version          = "16"
+  instance_class          = "db.t3.micro"
+  allocated_storage       = 20
+  storage_type            = "gp2"
+  username                = "meditrackadmin"
+  password                = var.db_password
+  db_name                 = "meditrack"
+  db_subnet_group_name    = aws_db_subnet_group.meditrack_db_subnet_group.name
+  vpc_security_group_ids  = [aws_security_group.meditrack_rds_sg.id]
+  publicly_accessible     = false
+  skip_final_snapshot     = true
+  deletion_protection     = true
+  backup_retention_period = 1
+
+  tags = {
+    Name = "meditrack-db"
+  }
+}
+
+# =========================
 # INTERNET GATEWAY
 # =========================
 
@@ -142,14 +195,6 @@ resource "aws_instance" "meditrack_ec2" {
   vpc_security_group_ids      = [aws_security_group.meditrack_sg.id]
   associate_public_ip_address = true
   key_name                    = var.key_name
-
-  user_data = <<-EOF
-              #!/bin/bash
-              yum install -y httpd
-              systemctl start httpd
-              systemctl enable httpd
-              echo "GreenOpsNina works 🚀" > /var/www/html/index.html
-              EOF
 
   tags = {
     Name = "meditrack-ec2"

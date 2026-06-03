@@ -6,12 +6,31 @@
   tasks:
 
     - name: Mettre à jour les paquets
-      yum:
+      dnf:
         name: "*"
         state: latest
 
+    # =========================
+    # SUPPRIMER APACHE SI PRÉSENT
+    # =========================
+
+    - name: Stop Apache if running
+      service:
+        name: httpd
+        state: stopped
+      ignore_errors: yes
+
+    - name: Remove Apache
+      dnf:
+        name: httpd
+        state: absent
+
+    # =========================
+    # NGINX
+    # =========================
+
     - name: Installer Nginx
-      yum:
+      dnf:
         name: nginx
         state: present
 
@@ -29,8 +48,12 @@
         group: nginx
         mode: '0644'
 
+    # =========================
+    # FIREWALL
+    # =========================
+
     - name: Installer firewalld
-      yum:
+      dnf:
         name: firewalld
         state: present
 
@@ -46,3 +69,17 @@
         permanent: true
         state: enabled
         immediate: yes
+
+    # =========================
+    # POSTGRESQL CLIENT + DNS
+    # =========================
+
+    - name: Installer PostgreSQL client
+      dnf:
+        name: postgresql15
+        state: present
+
+    - name: Installer outils DNS (nslookup, dig)
+      dnf:
+        name: bind-utils
+        state: present

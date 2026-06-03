@@ -9,9 +9,10 @@ resource "aws_vpc" "meditrack_vpc" {
 }
 
 resource "aws_subnet" "meditrack_subnet" {
-  vpc_id            = aws_vpc.meditrack_vpc.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "eu-west-3a"
+  vpc_id                  = aws_vpc.meditrack_vpc.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "eu-west-3a"
+  map_public_ip_on_launch = true
 
   tags = {
     Name = "meditrack-subnet"
@@ -81,18 +82,17 @@ resource "aws_instance" "meditrack_ec2" {
   associate_public_ip_address = true
   key_name                    = var.key_name
 
+  user_data = <<-EOF
+              #!/bin/bash
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "GreenOpsNina works 🚀" > /var/www/html/index.html
+              EOF
+
   tags = {
     Name = "meditrack-ec2"
   }
-}
-
-resource "aws_eip" "meditrack_eip" {
-  domain = "vpc"
-}
-
-resource "aws_eip_association" "meditrack_eip_assoc" {
-  instance_id   = aws_instance.meditrack_ec2.id
-  allocation_id = aws_eip.meditrack_eip.id
 }
 
 resource "aws_cloudfront_distribution" "meditrack_cdn" {

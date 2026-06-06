@@ -24,6 +24,23 @@ resource "aws_subnet" "meditrack_subnet" {
 }
 
 # =========================
+# SECOND PUBLIC SUBNET (ALB requirement)
+# =========================
+
+resource "aws_subnet" "meditrack_subnet_2" {
+  vpc_id                  = aws_vpc.meditrack_vpc.id
+  cidr_block              = "10.0.4.0/24"
+  availability_zone       = "eu-west-3b"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "meditrack-public-subnet-2"
+  }
+}
+
+
+
+# =========================
 # SUBNETS PRIVÉS POUR RDS
 # =========================
 
@@ -151,6 +168,11 @@ resource "aws_route_table_association" "meditrack_rta" {
   route_table_id = aws_route_table.meditrack_rt.id
 }
 
+resource "aws_route_table_association" "meditrack_rta_2" {
+  subnet_id      = aws_subnet.meditrack_subnet_2.id
+  route_table_id = aws_route_table.meditrack_rt.id
+}
+
 # =========================
 # SECURITY GROUP EC2
 # =========================
@@ -250,26 +272,6 @@ resource "aws_cloudfront_distribution" "meditrack_cdn" {
       restriction_type = "none"
     }
   }
-}
-
-################################
-# SECOND PUBLIC SUBNET (ALB REQUIREMENT)
-################################
-
-resource "aws_subnet" "meditrack_subnet_2" {
-  vpc_id                  = aws_vpc.meditrack_vpc.id
-  cidr_block              = "10.0.4.0/24"
-  availability_zone       = "eu-west-3b"
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "meditrack-public-subnet-2"
-  }
-}
-
-resource "aws_route_table_association" "meditrack_rta_2" {
-  subnet_id      = aws_subnet.meditrack_subnet_2.id
-  route_table_id = aws_route_table.meditrack_rt.id
 }
 
 ################################

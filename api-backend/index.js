@@ -7,32 +7,36 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 const pool = new Pool({
- host: process.env.DB_HOST,
- user: process.env.DB_USER,
- database: process.env.DB_NAME,
- password: process.env.DB_PASSWORD,
- port: process.env.DB_PORT || 5432,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT || 5432,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 const initializeDatabase = async () => {
- console.log("Tentative de connexion à la BDD...");
- const client = await pool.connect();
- try {
- await client.query(`
- CREATE TABLE IF NOT EXISTS contacts (
- id SERIAL PRIMARY KEY,
- nom VARCHAR(100) NOT NULL,
- email VARCHAR(100) NOT NULL,
- message TEXT,
- cree_le TIMESTAMP DEFAULT CURRENT_TIMESTAMP
- );
- `);
- console.log("Succès : Table 'contacts' vérifiée/créée.");
- } catch (err) {
- console.error("Erreur critique lors de l'initialisation BDD:", err.message);
- } finally {
- client.release();
- }
+  console.log("Tentative de connexion à la BDD...");
+  try {
+    const client = await pool.connect();
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS contacts (
+        id SERIAL PRIMARY KEY,
+        nom VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        message TEXT,
+        cree_le TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    console.log("✅ Succès : Table 'contacts' vérifiée/créée.");
+    client.release();
+  } catch (err) {
+    console.error("❌ ERREUR CONNEXION BDD :", err);
+  }
 };
 
 app.get('/', (req, res) => {
@@ -66,7 +70,11 @@ app.post('/contact', async (req, res) => {
  }
 });
 
-app.listen(PORT, () => {
- console.log(`Serveur API démarré sur le port ${PORT}`);
- initializeDatabase();
+app.listen(PORT, async () => {
+  console.log(`Serveur API démarré sur le port ${PORT}`);
+  try {
+    await initializeDatabase();
+  } catch (err) {
+    console.error("Erreur init DB :", err);
+  }
 });
